@@ -8,7 +8,7 @@
  *                                                                                                               
  * Project: Matrix Library in C
  * @author : Samuel Andersen
- * @version: 2024-09-18
+ * @version: 2024-10-08
  *
  */
 
@@ -22,12 +22,12 @@
 
 /* Matrix definition */
 #define MATRIX_CREATE_HEADER
-#define MATRIX_TYPE_NAME intMatrix
+#define MATRIX_TYPE_NAME IntMatrix
 #define MATRIX_TYPE int
 #include "Matrix.h"
 
 #define MATRIX_CREATE_HEADER
-#define MATRIX_TYPE_NAME floatMatrix
+#define MATRIX_TYPE_NAME FloatMatrix
 #define MATRIX_TYPE float
 #include "Matrix.h"
 

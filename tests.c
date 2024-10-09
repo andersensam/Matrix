@@ -8,18 +8,18 @@
  *                                                                                                               
  * Project: Matrix Library in C
  * @author : Samuel Andersen
- * @version: 2024-09-18
+ * @version: 2024-10-08
  *
  */
 
 #include "tests.h"
 
-#define MATRIX_TYPE_NAME intMatrix
+#define MATRIX_TYPE_NAME IntMatrix
 #define MATRIX_TYPE int
 #define MATRIX_STRING "%i"
 #include "Matrix.c"
 
-#define MATRIX_TYPE_NAME floatMatrix
+#define MATRIX_TYPE_NAME FloatMatrix
 #define MATRIX_TYPE float
 #define MATRIX_STRING "%f"
 #include "Matrix.c"
@@ -27,9 +27,9 @@
 /**
  * Function for testing methods on int Matrix
  */
-void test_intMatrix(void) {
+void test_IntMatrix(void) {
 
-    intMatrix* target = intMatrix_allocate(30, 15);
+    IntMatrix* target = IntMatrix_init(30, 15);
 
     for (size_t i = 0; i < target->num_rows; ++i) {
 
@@ -45,12 +45,12 @@ void test_intMatrix(void) {
 
     printf("Printing row 15 from Matrix:\n\n");
 
-    intMatrix* row = target->get_row(target, 15);
+    IntMatrix* row = target->get_row(target, 15);
     row->print(row);
 
     printf("Printing column 10 from Matrix:\n\n");
 
-    intMatrix* col = target->get_col(target, 10);
+    IntMatrix* col = target->get_col(target, 10);
     col->print(col);
 
     printf("Printing min and max for the Matrix: %i / %i\n", target->min(target), target->max(target));
@@ -63,7 +63,7 @@ void test_intMatrix(void) {
 
     printf("\nStarting dot product test... 3 x 3 (dot) 3 x 2\n");
 
-    intMatrix* first = intMatrix_allocate(3, 3);
+    IntMatrix* first = IntMatrix_init(3, 3);
 
     /*
      * Create the following Matrix:
@@ -82,7 +82,7 @@ void test_intMatrix(void) {
     first->print(first);
     printf("\n");
 
-    intMatrix* second = intMatrix_allocate(3, 2);
+    IntMatrix* second = IntMatrix_init(3, 2);
 
     /*
      * Create the following Matrix:
@@ -101,7 +101,7 @@ void test_intMatrix(void) {
     second->print(second);
     printf("\n");
 
-    intMatrix* dot = first->dot(first, second);
+    IntMatrix* dot = first->dot(first, second);
 
     /*
      * We expect the following output:
@@ -117,7 +117,7 @@ void test_intMatrix(void) {
 
     printf("\nContinuing dot product test... 1 x 3 (dot) 3 x 1\n");
 
-    intMatrix* third = intMatrix_allocate(1, 3);
+    IntMatrix* third = IntMatrix_init(1, 3);
 
     /*
      * Create the following Matrix:
@@ -131,7 +131,7 @@ void test_intMatrix(void) {
     third->print(third);
     printf("\n");
 
-    intMatrix* fourth = intMatrix_allocate(3, 1);
+    IntMatrix* fourth = IntMatrix_init(3, 1);
 
     /*
      * Create the following Matrix:
@@ -162,8 +162,8 @@ void test_intMatrix(void) {
 
     printf("\nFinishing dot product test... 2 x 2 (dot) 2 x 2\n");
 
-    intMatrix* fifth = intMatrix_allocate(2, 2);
-    intMatrix* sixth = intMatrix_allocate(2, 2);
+    IntMatrix* fifth = IntMatrix_init(2, 2);
+    IntMatrix* sixth = IntMatrix_init(2, 2);
 
     for (size_t i = 0; i < 2; ++i) {
 
@@ -199,9 +199,9 @@ void test_intMatrix(void) {
 /**
  * Function for testing methods on float Matrix
  */
-void test_floatMatrix(void) {
+void test_FloatMatrix(void) {
 
-    floatMatrix* target = floatMatrix_allocate(30, 15);
+    FloatMatrix* target = FloatMatrix_init(30, 15);
 
     float test_val = 0.003145;
 
@@ -219,12 +219,12 @@ void test_floatMatrix(void) {
 
     printf("Printing row 15 from Matrix:\n\n");
 
-    floatMatrix* row = target->get_row(target, 15);
+    FloatMatrix* row = target->get_row(target, 15);
     row->print(row);
 
     printf("Printing column 10 from Matrix:\n\n");
 
-    floatMatrix* col = target->get_col(target, 10);
+    FloatMatrix* col = target->get_col(target, 10);
     col->print(col);
 
     printf("Printing min and max for the Matrix: %f / %f\n", target->min(target), target->max(target));
@@ -237,7 +237,7 @@ void test_floatMatrix(void) {
 
     printf("\nStarting dot product test... 3 x 3 (dot) 3 x 2\n");
 
-    floatMatrix* first = floatMatrix_allocate(3, 3);
+    FloatMatrix* first = FloatMatrix_init(3, 3);
 
     /*
      * Create the following Matrix:
@@ -256,7 +256,7 @@ void test_floatMatrix(void) {
     first->print(first);
     printf("\n");
 
-    floatMatrix* second = floatMatrix_allocate(3, 2);
+    FloatMatrix* second = FloatMatrix_init(3, 2);
 
     /*
      * Create the following Matrix:
@@ -275,7 +275,7 @@ void test_floatMatrix(void) {
     second->print(second);
     printf("\n");
 
-    floatMatrix* dot = first->dot(first, second);
+    FloatMatrix* dot = first->dot(first, second);
 
     /*
      * We expect the following output:
@@ -291,7 +291,7 @@ void test_floatMatrix(void) {
 
     printf("\nContinuing dot product test... 1 x 3 (dot) 3 x 1\n");
 
-    floatMatrix* third = floatMatrix_allocate(1, 3);
+    FloatMatrix* third = FloatMatrix_init(1, 3);
 
     /*
      * Create the following Matrix:
@@ -305,7 +305,7 @@ void test_floatMatrix(void) {
     third->print(third);
     printf("\n");
 
-    floatMatrix* fourth = floatMatrix_allocate(3, 1);
+    FloatMatrix* fourth = FloatMatrix_init(3, 1);
 
     /*
      * Create the following Matrix:
@@ -336,8 +336,8 @@ void test_floatMatrix(void) {
 
     printf("\nFinishing dot product test... 2 x 2 (dot) 2 x 2\n");
 
-    floatMatrix* fifth = floatMatrix_allocate(2, 2);
-    floatMatrix* sixth = floatMatrix_allocate(2, 2);
+    FloatMatrix* fifth = FloatMatrix_init(2, 2);
+    FloatMatrix* sixth = FloatMatrix_init(2, 2);
 
     for (size_t i = 0; i < 2; ++i) {
 
@@ -375,8 +375,8 @@ int main(void) {
     // Set the random seed used for rand() later on
     srand(time(NULL));
 
-    test_intMatrix();
-    test_floatMatrix();
+    test_IntMatrix();
+    test_FloatMatrix();
 
     return 0;
 }
