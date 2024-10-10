@@ -184,7 +184,7 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(get_row)(const MATRIX_TYPE_NAME *target, size_t 
 
     for (size_t i = 0; i < target->num_cols; ++i) {
 
-        result->set(result, 0, i, target->get(target, target_row, i));
+        MATRIX_METHOD(set)(result, 0, i, MATRIX_METHOD(get)(target, target_row, i));
     }
 
     return result;
@@ -209,7 +209,7 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(get_col)(const MATRIX_TYPE_NAME *target, size_t 
 
     for (size_t i = 0; i < target->num_rows; ++i) {
 
-        result->set(result, i, 0, target->get(target, i, target_col));
+        MATRIX_METHOD(set)(result, i, 0, MATRIX_METHOD(get)(target, i, target_col));
     }
 
     return result;
@@ -234,7 +234,7 @@ void MATRIX_METHOD(print)(const MATRIX_TYPE_NAME *target) {
 
         for (size_t j = 0; j < target->num_cols; ++j) {
 
-            printf(MATRIX_STRING, target->get(target, i, j));
+            printf(MATRIX_STRING, MATRIX_METHOD(get)(target, i, j));
             printf(" ");
         }
 
@@ -255,16 +255,13 @@ MATRIX_TYPE MATRIX_METHOD(max)(const MATRIX_TYPE_NAME *target) {
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE current_max = target->get(target, 0, 0);
+    MATRIX_TYPE current_max = target->data[0];
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 1; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
+        MATRIX_TYPE current_value = target->data[i];
 
-            MATRIX_TYPE current_value = target->get(target, i, j);
-
-            current_max = (current_max > current_value) ? current_max : current_value;
-        }
+        current_max = (current_max > current_value) ? current_max : current_value;
     }
 
     return current_max;
@@ -282,16 +279,13 @@ MATRIX_TYPE MATRIX_METHOD(min)(const MATRIX_TYPE_NAME *target) {
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE current_min = target->get(target, 0, 0);
+    MATRIX_TYPE current_min = target->data[0];
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 1; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
+        MATRIX_TYPE current_value = target->data[i];
 
-            MATRIX_TYPE current_value = target->get(target, i, j);
-
-            current_min = (current_min < current_value) ? current_min : current_value;
-        }
+        current_min = (current_min < current_value) ? current_min : current_value;
     }
 
     return current_min;
@@ -311,42 +305,17 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(flatten)(const MATRIX_TYPE_NAME *target, Vector_
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = NULL;
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(target);
 
     if (orientation == ROW) {
 
-        result = MATRIX_METHOD(init)(1, target->num_cols * target->num_rows);
+        result->num_rows = 1;
+        result->num_cols = target->num_rows * target->num_cols;
     }
     else {
 
-        result = MATRIX_METHOD(init)(target->num_cols * target->num_rows, 1);
-    }
-
-    if (result == NULL) {
-
-        if (MATRIX_DEBUG) { fprintf(stderr, "ERR: Unable to allocate memory for flattened Matrix\n"); }
-        exit(EXIT_FAILURE);
-    }
-
-    size_t index = 0;
-
-    for (size_t i = 0; i < target->num_rows; ++i) {
-
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            // Get the addess in memory of the data and put its pointer in the result array
-            if (orientation == ROW) {
-
-                result->data[index] = target->data[(i * target->num_cols) + j];
-            }
-            else {
-
-                result->data[index * result->num_cols] = target->data[(i * target->num_cols) + j];
-            }
-
-            // Increment the index
-            ++index;
-        }
+        result->num_cols = 1;
+        result->num_rows = target->num_rows * target->num_cols;
     }
 
     return result;
@@ -405,15 +374,9 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(add)(const MATRIX_TYPE_NAME *self, const MATRIX_
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = MATRIX_METHOD(init)(self->num_rows, self->num_cols);
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(self);
 
-    for (size_t i = 0; i < self->num_rows; ++i) {
-
-        for (size_t j = 0; j < self->num_cols; ++j) {
-
-            result->data[(i * result->num_cols) + j] = self->data[(i * self->num_cols) + j] + target->data[(i * target->num_cols) + j];
-        }
-    }
+    MATRIX_METHOD(add_o)(result, target);
 
     return result;
 }
@@ -437,12 +400,9 @@ void MATRIX_METHOD(add_o)(const MATRIX_TYPE_NAME *self, const MATRIX_TYPE_NAME *
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < self->num_rows; ++i) {
+    for (size_t i = 0; i < self->num_rows * self->num_cols; ++i) {
 
-        for (size_t j = 0; j < self->num_cols; ++j) {
-
-            self->data[(i * self->num_cols) + j] += target->data[(i * target->num_cols) + j];
-        }
+        self->data[i] += target->data[i];
     }
 }
 
@@ -466,21 +426,9 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(subtract)(const MATRIX_TYPE_NAME *self, const MA
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = MATRIX_METHOD(init)(self->num_rows, self->num_cols);
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(self);
 
-    if (result == NULL) { 
-
-        if (MATRIX_DEBUG) { fprintf(stderr, "ERR: Unable to allocate memory for subtraxtion Matrix result\n"); }
-        exit(EXIT_FAILURE);
-    }
-
-    for (size_t i = 0; i < self->num_rows; ++i) {
-
-        for (size_t j = 0; j < self->num_cols; ++j) {
-
-            result->data[(i * result->num_cols) + j] = self->data[(i * self->num_cols) + j] - target->data[(i * target->num_cols) + j];
-        }
-    }
+    MATRIX_METHOD(subtract_o)(result, target);
 
     return result;
 }
@@ -504,12 +452,9 @@ void MATRIX_METHOD(subtract_o)(const MATRIX_TYPE_NAME *self, const MATRIX_TYPE_N
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < self->num_rows; ++i) {
+    for (size_t i = 0; i < self->num_rows * self->num_cols; ++i) {
 
-        for (size_t j = 0; j < self->num_cols; ++j) {
-
-            self->data[(i * self->num_cols) + j] += target->data[(i * target->num_cols) + j];
-        }
+        self->data[i] -= target->data[i];
     }
 }
 
@@ -527,15 +472,9 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(scale)(const MATRIX_TYPE_NAME *target, MATRIX_TY
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = MATRIX_METHOD(init)(target->num_rows, target->num_cols);
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(target);
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
-
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            result->data[(i * result->num_cols) + j] = target->data[(i * target->num_cols) + j] * scalar;
-        }
-    }
+    MATRIX_METHOD(scale_o)(result, scalar);
 
     return result;
 }
@@ -553,12 +492,9 @@ void MATRIX_METHOD(scale_o)(const MATRIX_TYPE_NAME *target, MATRIX_TYPE scalar) 
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 0; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            target->data[(i * target->num_cols) + j] *= scalar;
-        }
+        target->data[i] *= scalar;
     }
 
     return;
@@ -578,15 +514,9 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(add_scalar)(const MATRIX_TYPE_NAME *target, MATR
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = MATRIX_METHOD(init)(target->num_rows, target->num_cols);
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(target);
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
-
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            result->data[(i * result->num_cols) + j] = target->data[(i * target->num_cols) + j] + scalar;
-        }
-    }
+    MATRIX_METHOD(add_scalar_o)(result, scalar);
 
     return result;
 }
@@ -604,12 +534,9 @@ void MATRIX_METHOD(add_scalar_o)(const MATRIX_TYPE_NAME *target, MATRIX_TYPE sca
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 0; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            target->data[(i * target->num_cols) + j] += scalar;
-        }
+        target->data[i] += scalar;
     }
 
     return;
@@ -629,15 +556,9 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(apply)(const MATRIX_TYPE_NAME *target, MATRIX_TY
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = MATRIX_METHOD(init)(target->num_rows, target->num_cols);
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(target);
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
-
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            result->data[(i * result->num_cols) + j] = (*func)(target->data[(i * target->num_cols) + j]);
-        }
-    }
+    MATRIX_METHOD(apply_o)(result, func);
 
     return result;
 }
@@ -655,12 +576,9 @@ void MATRIX_METHOD(apply_o)(const MATRIX_TYPE_NAME *target, MATRIX_TYPE (*func)(
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 0; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            target->data[(i * target->num_cols) + j] = (*func)(target->data[(i * target->num_cols) + j]);
-        }
+        target->data[i] = (*func)(target->data[i]);
     }
 
     return;
@@ -681,14 +599,11 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(apply_second)(const MATRIX_TYPE_NAME *target, MA
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = MATRIX_METHOD(init)(target->num_rows, target->num_cols);
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(target);
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 0; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            result->data[(i * result->num_cols) + j] = (*func)(target->data[(i * target->num_cols) + j], param);
-        }
+        result->data[i] = (*func)(target->data[i], param);
     }
 
     return result;
@@ -716,15 +631,9 @@ MATRIX_TYPE_NAME *MATRIX_METHOD(multiply)(const MATRIX_TYPE_NAME *self, const MA
         exit(EXIT_FAILURE);
     }
 
-    MATRIX_TYPE_NAME *result = MATRIX_METHOD(init)(self->num_rows, self->num_cols);
+    MATRIX_TYPE_NAME *result = MATRIX_METHOD(copy)(self);
 
-    for (size_t i = 0; i < self->num_rows; ++i) {
-
-        for (size_t j = 0; j < self->num_cols; ++j) {
-
-            result->data[(i * result->num_cols) + j] = self->data[(i * self->num_cols) + j] * target->data[(i * target->num_cols) + j];
-        }
-    }
+    MATRIX_METHOD(multiply_o)(result, target);
 
     return result;
 }
@@ -750,12 +659,9 @@ void MATRIX_METHOD(multiply_o)(const MATRIX_TYPE_NAME *self, const MATRIX_TYPE_N
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < self->num_rows; ++i) {
+    for (size_t i = 0; i < self->num_rows * self->num_cols; ++i) {
 
-        for (size_t j = 0; j < self->num_cols; ++j) {
-
-            self->data[(i * self->num_cols) + j] *= target->data[(i * target->num_cols) + j];
-        }
+        self->data[i] *= target->data[i];
     }
 
     return;
@@ -774,12 +680,9 @@ void MATRIX_METHOD(populate)(MATRIX_TYPE_NAME *target, MATRIX_TYPE value) {
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 0; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            target->data[(i * target->num_cols) + j] = value;
-        }
+        target->data[i] = value;
     }
 }
 
@@ -818,12 +721,9 @@ MATRIX_TYPE MATRIX_METHOD(sum)(const MATRIX_TYPE_NAME *target) {
 
     MATRIX_TYPE running_sum = 0;
 
-    for (size_t i = 0; i < target->num_rows; ++i) {
+    for (size_t i = 0; i < target->num_rows * target->num_cols; ++i) {
 
-        for (size_t j = 0; j < target->num_cols; ++j) {
-
-            running_sum += target->data[(i * target->num_cols) + j];
-        }
+        running_sum += target->data[i];
     }
 
     return running_sum;
@@ -869,11 +769,11 @@ size_t MATRIX_METHOD(max_idx)(const MATRIX_TYPE_NAME *target, Vector_Orientation
 
     if (orientation == ROW) {
 
-        search = target->get_row(target, index);
+        search = MATRIX_METHOD(get_row)(target, index);
     }
     else {
 
-        search = target->get_col(target, index);
+        search = MATRIX_METHOD(get_col)(target, index);
     }
 
     max_index = MATRIX_METHOD(max_idx)(search, orientation, 0);
